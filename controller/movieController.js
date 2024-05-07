@@ -1,16 +1,47 @@
 import { createMovie,getMovieByID,getAllMovies,updateMovie } from "../service/movieService.js";
+import movieValidation from "../middleware/movieMiddleware.js";
+
+
+// const createMovieController = async (req, res) => {
+//     const { Title, Year, Actor, Producer, imdbRating, Images } = req.body;
+
+//     const { error } = movieValidation(req.body);
+//     if (error) {
+//         return res.status(400).json({ message: error.details[0].message });
+//     }
+
+//     try {
+//         const movie = await createMovie(Title, Year, Actor, Producer, imdbRating, Images);
+        
+//         res.status(201).json(movie);
+//     } catch (error) {
+//         res.status(400).json({ message: "Failed to create movie", error: error.message });
+//     }
+// };
+
+
 
 const createMovieController = async (req, res) => {
     const { Title, Year, Actor, Producer, imdbRating, Images } = req.body;
+
+    const { error } = movieValidation(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
 
     try {
         const movie = await createMovie(Title, Year, Actor, Producer, imdbRating, Images);
         
         res.status(201).json(movie);
     } catch (error) {
-        res.status(400).json({ message: "Failed to create movie", error: error.message });
+        if (error.message === "Movie already exists") {
+            return res.status(400).json({ message: "Movie already exists" });
+        } else {
+            return res.status(400).json({ message: "Failed to create movie", error: error.message });
+        }
     }
 };
+
 
 const getMovieByIDController = async (req, res) => {
     const movieId = req.params.id;

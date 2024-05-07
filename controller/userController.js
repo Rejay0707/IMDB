@@ -1,7 +1,7 @@
 import User from "../model/userModel.js";
 import { registerUser, checkUser, loginUser } from "../service/userService.js";
 import generateToken from "../utils/generateToken.js";
-// import { register } from "../middleware/authMiddleware.js";
+import { register, login } from "../middleware/authMiddleware.js";
 
 const generateTokenResponse = (res, user) => {
   generateToken(res, user._id);
@@ -11,6 +11,15 @@ const generateTokenResponse = (res, user) => {
 
 const createUser = async (req, res) => {
   const { name, email, password, isAdmin } = req.body;
+
+  const { error } = register(req.body);
+
+  if (error) {
+    console.log(error);
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
 
   try {
     const userExists = await checkUser(email);
@@ -32,7 +41,6 @@ const createUser = async (req, res) => {
       sameSite: "strict",
       maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
     });
-  
 
     res.status(201).json({
       _id: user._id,
@@ -52,6 +60,14 @@ const createUser = async (req, res) => {
 const authenticateUser = async (req, res) => {
   const { email, password } = req.body;
   console.log(req.body);
+
+  const { error } = login(req.body);
+  if (error) {
+    console.log(error);
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
   try {
     const user = await loginUser(email, password);
     console.log(user);
@@ -65,7 +81,6 @@ const authenticateUser = async (req, res) => {
         sameSite: "strict",
         maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
       });
-    
 
       res.status(200).json({
         _id: user._id,
@@ -75,14 +90,13 @@ const authenticateUser = async (req, res) => {
         token: token,
       });
     } else {
-      // User not found or password incorrect
-      res.status(401).json({
-        message: "Invalid email or password",
+      res.status(500).json({
+        message: "Internal Server Error",
       });
     }
   } catch (error) {
-    res.status(500).json({
-      message: "Internal Server Error",
+    res.status(400).json({
+      message: "Invalid email or password",
     });
   }
 };
